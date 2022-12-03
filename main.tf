@@ -1,8 +1,8 @@
 # Security Group
-resource "aws_security_group" "polarity_sg" {
+resource "aws_security_group" "sg" {
   vpc_id       = var.vpc_id
   name = "${format("%s-%s-sg", var.namespace, var.app-name)}"
-  description  = "Polarity Instance Security Group"
+  description  = "Instance Security Group"
   
   ingress {
     cidr_blocks = [ "0.0.0.0/0" ]
@@ -53,13 +53,13 @@ data "template_file" "user_data" {
     rds_password    = var.rds_password
       }
 }
-resource "aws_instance" "polarity" {
+resource "aws_instance" "service" {
   ami           = var.ami
   user_data = data.template_file.user_data.rendered
   instance_type = var.instance
   iam_instance_profile = "cloudwatchmetricsrole"
   key_name = var.key
-  vpc_security_group_ids = [ aws_security_group.polarity_sg.id ]
+  vpc_security_group_ids = [ aws_security_group.sg.id ]
   subnet_id = var.private_subnet_id
   root_block_device {
     volume_size = 200
