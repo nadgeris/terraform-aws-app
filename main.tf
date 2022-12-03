@@ -1,7 +1,7 @@
 # Security Group
 resource "aws_security_group" "polarity_sg" {
   vpc_id       = var.vpc_id
-  name = "app-sg"
+  name = "${format("%s-%s-sg", var.namespace, var.app-name)}"
   description  = "Polarity Instance Security Group"
   
   ingress {
@@ -48,7 +48,9 @@ resource "aws_security_group" "polarity_sg" {
 data "template_file" "user_data" {
   template = file("${path.module}/files/userdata.sh")
   vars = {
-    hostname        = "${format("%s-app-server", var.namespace )}"
+    hostname        = "${format("%s-%s", var.namespace, var.app-name)}"
+    rds_endpoint    = var.rds_endpoint
+    rds_password    = var.rds_password
       }
 }
 resource "aws_instance" "polarity" {
@@ -56,20 +58,19 @@ resource "aws_instance" "polarity" {
   user_data = data.template_file.user_data.rendered
   instance_type = var.instance
   iam_instance_profile = "cloudwatchmetricsrole"
-  key_name = format("%s-%s", var.namespace, var.prod_name)
+  key_name = var.key
   vpc_security_group_ids = [ aws_security_group.polarity_sg.id ]
   subnet_id = var.private_subnet_id
   root_block_device {
     volume_size = 200
     volume_type = "gp3"
       tags = {
-        Name        = "${format("%s-app-server", var.namespace )}"    
+        Name        = "${format("%s-%s", var.namespace, var.app-name)}"    
         Terraform   = "true"        
       }
   }
   tags = {
-    Name        = format("%s-app-server", var.namespace)
+    Name        = "${format("%s-%s", var.namespace, var.app-name)}"
     Terraform   = "true"
   }
 }
-
